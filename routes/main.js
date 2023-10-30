@@ -147,4 +147,19 @@ module.exports = function (app, shopData) {
             }
         })
     })
+    app.get('/deleteuser', function (req,res){
+        res.render("deleteuser.ejs", shopData);
+    })
+    app.post('/deleteduser', function (req,res){
+        username = req.body.username;
+
+        db.query(`DELETE FROM users WHERE username = "${username}"`, function (err, result){
+            if (err){
+                return console.error(err.message);
+            }
+            else{
+                res.send("User deleted!");
+            }
+        })
+    })
 }
