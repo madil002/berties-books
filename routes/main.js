@@ -2,6 +2,14 @@ module.exports = function (app, shopData) {
     const bcrypt = require('bcryptjs');
     const saltRounds = 10;
 
+    const redirectLogin = (req, res , next) => {
+        if (!req.session.userId){
+            res.redirect('/login')
+        }else{
+            next();
+        }
+    }
+
     // Handle our routes
     app.get('/', function (req, res) {
         res.render('index.ejs', shopData)
@@ -54,7 +62,7 @@ module.exports = function (app, shopData) {
             }
           })        
     });
-    app.get('/list', function (req, res) {
+    app.get('/list', redirectLogin, function (req, res) {
         let sqlquery = "SELECT * FROM books"; // query database to get all the books
         // execute sql query
         db.query(sqlquery, (err, result) => {
@@ -109,17 +117,6 @@ module.exports = function (app, shopData) {
     app.get('/login', function(req,res){
         res.render("login.ejs", shopData);
     });
-    // app.post('/loggedin', function(req, res){
-    //     username = req.body.username;
-    //     password = req.body.password;
-        
-    //     db.query(`SELECT * FROM users WHERE username = '${username}'`, (err, result) => {
-    //         if (err) {
-    //             return console.error(err.message);
-    //         }
-    //         console.log(result[0].hashedpassword);
-    //     })
-    // })
     app.post('/loggedin', function (req, res) {
         username = req.body.username;
         password = req.body.password;
@@ -137,6 +134,7 @@ module.exports = function (app, shopData) {
                     if (err) {
                         return console.error(err.message);
                     } else if (result == true) {
+                        req.session.userId = username;
                         res.send("Logged in!")
                     } else if (result == false) {
                         res.send("Incorrect!")
@@ -160,6 +158,14 @@ module.exports = function (app, shopData) {
             else{
                 res.send("User deleted!");
             }
+        })
+    })
+    app.get('/logout', redirectLogin, (req, res) =>{
+        req.session.destroy(err => {
+            if (err) {
+                return res.redirect('./')
+            }
+            res.send('you are now logged out. <a href='+'./'+'>Home</a>');
         })
     })
 }
