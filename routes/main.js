@@ -166,12 +166,54 @@ module.exports = function (app, shopData) {
             }
         })
     })
-    app.get('/logout', redirectLogin, (req, res) =>{
+    app.get('/logout', redirectLogin, (req, res) => {
         req.session.destroy(err => {
             if (err) {
                 return res.redirect('./')
             }
-            res.send('you are now logged out. <a href='+'./'+'>Home</a>');
+            res.send('you are now logged out. <a href=' + './' + '>Home</a>');
         })
+    })
+    app.get('/weather', function (req, res) {
+        res.render("weather.ejs", shopData);
+    })
+    app.post('/displayweather', function (req, res) {
+        const request = require('request');
+        const desiredCity = req.sanitize(req.body.city);
+
+        let apiKey = 'aed5c1c0d936504cc3ce185b062f904b';
+        let city = desiredCity;
+        let url = `http://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${apiKey}`
+
+        request(url, function (err, response, body) {
+            if (err) {
+                console.log('error:', error);
+                res.redirect('/weather')
+            } else {
+                var weather = JSON.parse(body)
+                if (weather !== undefined && weather.main !== undefined) {
+                    function formatTime(unixTimestamp) {
+                        const date = new Date(unixTimestamp * 1000);
+                        const hours = date.getHours();
+                        const minutes = "0" + date.getMinutes();
+                        const ampm = hours >= 12 ? 'PM' : 'AM';
+                        const formattedTime = `${hours % 12 || 12}:${minutes.substr(-2)} ${ampm}`;
+                        return formattedTime;
+                    }
+                    var sunriseTime = formatTime(weather.sys.sunrise);
+                    var sunsetTime = formatTime(weather.sys.sunset);
+                    var wmsg = 'Weather forecast for ' + weather.name + ': <br>' +
+                        'Temperature: ' + weather.main.temp + '<br>' +
+                        'Humidity: ' + weather.main.humidity + '<br>' +
+                        'Pressure: ' + weather.main.pressure + '<br>' +
+                        'Sunrise: ' + sunriseTime + '<br>' +
+                        'Sunset: ' + sunsetTime;
+                    res.send(wmsg);
+                }
+                else {
+                    res.send("No Data found");
+                }
+            }
+        });
     })
 }
