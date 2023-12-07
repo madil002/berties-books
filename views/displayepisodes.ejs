@@ -1,0 +1,24 @@
+<!doctype html>
+<html>
+
+<head>
+    <title>Episodes</title>
+    <link rel="stylesheet" type="text/css" href="/main.css" />
+</head>
+
+<body>
+    <h1>Episodes List</h1>
+    <ul>
+        <% episodes.forEach(function(episode) { %>
+            <li>
+                <h2><%= episode.name %></h2>
+                <p>Season: <%= episode.season %>, Episode: <%= episode.number %></p>
+                <p>Airdate: <%= episode.airdate %></p>
+                <p><%= episode.summary %></p>
+            </li>
+        <% }); %>
+    </ul>
+    <a href="./searchtvshows">Back to Search</a>
+</body>
+
+</html>

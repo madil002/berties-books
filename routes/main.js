@@ -124,8 +124,8 @@ module.exports = function (app, shopData) {
         res.render("login.ejs", shopData);
     });
     app.post('/loggedin', function (req, res) {
-        req.sanitize(username) = req.body.username;
-        req.sanitize(password) = req.body.password;
+        username = req.sanitize(req.body.username);
+        password = req.sanitize(req.body.password);
 
         db.query(`SELECT hashedpassword FROM users WHERE username = '${username}'`, (err, result) => {
             if (err) {
@@ -215,5 +215,56 @@ module.exports = function (app, shopData) {
                 }
             }
         });
+    })
+    app.get('/api', function (req,res) {
+        // Query database to get all the books
+        let sqlquery = "SELECT * FROM books";
+        if (req.query.keyword){
+            let keyword = req.sanitize(req.query.keyword);
+            sqlquery = `SELECT * FROM books WHERE name LIKE '%${keyword}%'`;
+        } 
+
+        // Execute the sql query
+        db.query(sqlquery, (err, result) => {
+            if (err) {
+                res.redirect('./');
+            }
+            // Return results as a JSON object
+            res.json(result); 
+        });
+    });
+    app.get('/searchtvshows', function (req, res) {
+        res.render("searchtvshows.ejs", shopData);
+    })
+    app.post('/gettvshow', function (req, res){
+        const request = require('request');
+        const desiredshow = req.sanitize(req.body.name);
+        let url = `https://api.tvmaze.com/search/shows?q=${desiredshow}`
+
+        request(url, function(err, response, body) {
+            if (err){
+                console.log('error:', err);
+                res.redirect('/searchtvshows');
+            } else {
+                var shows = JSON.parse(body);
+                if (shows.length > 0){
+                    let showid = shows[0].show.id;
+                    let url = `https://api.tvmaze.com/shows/${showid}/episodes`;
+
+                    request(url, function(err, response, body) {
+                        if (err){
+                            console.log('error:', err);
+                            res.redirect('/searchtvshows');
+                        } else {
+                            var episodes = JSON.parse(body);
+                            let newData = Object.assign({}, shopData, { episodes: episodes});
+                            res.render("displayepisodes.ejs", newData)
+                        }
+                    })
+                } else {
+                    res.send('No shows found for this query. <a href="./searchtvshows">Search TVShows</a>');
+                }
+            }
+        })
     })
 }
